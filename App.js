@@ -11,32 +11,32 @@ const styles = {
     fillAntialias: true,
     fillColor: '#f4efe8',
     fillOutlineColor: '#d2af82',
-    fillOpacity: 0.84,
+    fillOpacity: 0.5,
   },
   selectedNeighborhood: {
     fillAntialias: true,
     fillColor: '#d2af82',
     fillOpacity: 0.84,
   },
+  deSelectedNeighborhood: {
+    fillAntialias: true,
+    fillColor: '#f4efe8',
+    fillOpacity: 0.84,
+  },
 };
 
 function App() {
   const mapRef = useRef(null)
+  const shapeFillRef = useRef(null);
   const [currentScreenCords, setCurrentScreenCords] = useState({});
   const [screenCordsConfig, setScreenCordsConfig] = useState({});
+  const [isSameViewClicked, setIsSameViewClicked] = useState(false);
 
-  const getBoundingBox = (screenCoords) => {
-    const maxX = Math.max(screenCoords[0][0], screenCoords[1][0]);
-    const minX = Math.min(screenCoords[0][0], screenCoords[1][0]);
-    const maxY = Math.max(screenCoords[0][1], screenCoords[1][1]);
-    const minY = Math.min(screenCoords[0][1], screenCoords[1][1]);
-    return [maxY, maxX, minY, minX];
-  }
 
   const onPress = useCallback(async e => {
     let userSelectedCords;
     const {screenPointX, screenPointY} = e.properties;
-
+    
     const featureCollection = await mapRef.current.queryRenderedFeaturesAtPoint(
       [screenPointX, screenPointY],
       null,
@@ -44,18 +44,18 @@ function App() {
     );
 
     if (featureCollection.features.length) {
-      const {communityDistrict} = featureCollection.features[0].properties;
-      if (Reflect.ownKeys(screenCordsConfig).includes(communityDistrict.toString())) { 
-       
-        // setScreenCordsConfig(updatedConfig);
+      const {id} = featureCollection.features[0];
+      if (Reflect.ownKeys(screenCordsConfig).includes(id)) { 
+        !!Reflect.ownKeys(screenCordsConfig) && delete screenCordsConfig[id];
+        setIsSameViewClicked(true)
       } else {
-        userSelectedCords = Object.assign(screenCordsConfig, {[communityDistrict]: featureCollection});
+        userSelectedCords = Object.assign(screenCordsConfig, {[id]: featureCollection});
+        setScreenCordsConfig(userSelectedCords);
+        setIsSameViewClicked(false)
       }
-      setScreenCordsConfig(userSelectedCords);
       setCurrentScreenCords(featureCollection)
     }  
   }, []);
-
   return (
     <>
         <MapboxGL.MapView
@@ -64,11 +64,11 @@ function App() {
           style={{flex: 1, fillColor: '#f4efe8'}}
           styleURL={MapboxGL.StyleURL.Light}>
           <MapboxGL.Camera
-            zoomLevel={9}
+            zoomLevel={1}
             centerCoordinate={[-73.970895, 40.723279]}
           />
 
-          <MapboxGL.ShapeSource id="nyc" shape={nycJSON}>
+          <MapboxGL.ShapeSource  id="nyc" shape={nycJSON}>
             <MapboxGL.FillLayer id="nycFill" style={styles.neighborhoods} />
           </MapboxGL.ShapeSource>
 
@@ -77,20 +77,29 @@ function App() {
               id="selectedNYC"
               shape={currentScreenCords}>
               <MapboxGL.FillLayer
+                ref ={ref => shapeFillRef.current = ref}
                 id="selectedNYCFill"
-                style={styles.selectedNeighborhood}
+                style={isSameViewClicked ? styles.deSelectedNeighborhood : styles.selectedNeighborhood}
               />
             </MapboxGL.ShapeSource>
           ) : null}
         </MapboxGL.MapView>
         <View style={{position: 'absolute', top: 0, flex: 1, alignItems: 'center', backgroundColor: 'rgba(255,255,255, 0.8)',}}>
-          {
-           <Text>{
-             JSON.stringify(screenCordsConfig)
-             }</Text>
+          {   
+          !!Reflect.ownKeys(screenCordsConfig) && Reflect.ownKeys(screenCordsConfig).map(item => {
+            return <Text key={item} style={{flex: 1}}>{screenCordsConfig[item].features[0].properties.name}</Text> 
+           })
           }
         </View>
+
+        <View style={{position: 'absolute', top: 0, right: 0, flex: 1, alignItems: 'flex-end', backgroundColor: 'rgba(255,255,255, 0.8)',}}>
+          {   
+            <Text style={{flex: 1}}>{`${Reflect.ownKeys(screenCordsConfig).length} / ${nycJSON.features.length}` }</Text> 
+          }
+        </View>   
+
       </>
+
   );
 
 }
