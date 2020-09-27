@@ -28,13 +28,12 @@ const styles = {
 function App() {
   const mapRef = useRef(null)
   const shapeFillRef = useRef(null);
-  const [currentScreenCords, setCurrentScreenCords] = useState({});
+  const [currentScreenCords, setCurrentScreenCords] = useState([]);
   const [screenCordsConfig, setScreenCordsConfig] = useState({});
-  const [isSameViewClicked, setIsSameViewClicked] = useState(false);
 
 
   const onPress = useCallback(async e => {
-    let userSelectedCords;
+    let userSelectedCords, currCords = [];
     const {screenPointX, screenPointY} = e.properties;
     
     const featureCollection = await mapRef.current.queryRenderedFeaturesAtPoint(
@@ -47,13 +46,12 @@ function App() {
       const {id} = featureCollection.features[0];
       if (Reflect.ownKeys(screenCordsConfig).includes(id)) { 
         !!Reflect.ownKeys(screenCordsConfig) && delete screenCordsConfig[id];
-        setIsSameViewClicked(true)
       } else {
         userSelectedCords = Object.assign(screenCordsConfig, {[id]: featureCollection});
-        setScreenCordsConfig(userSelectedCords);
-        setIsSameViewClicked(false)
+        setScreenCordsConfig(userSelectedCords);   
       }
-      setCurrentScreenCords(featureCollection)
+      Reflect.ownKeys(screenCordsConfig).map(item => currCords.push(screenCordsConfig[item].features[0]))
+      setCurrentScreenCords(currCords)
     }  
   }, []);
   return (
@@ -72,14 +70,14 @@ function App() {
             <MapboxGL.FillLayer id="nycFill" style={styles.neighborhoods} />
           </MapboxGL.ShapeSource>
 
-          {!!Reflect.ownKeys(currentScreenCords).length ? (
+          {currentScreenCords.length ? (
             <MapboxGL.ShapeSource
               id="selectedNYC"
-              shape={currentScreenCords}>
+              shape={{"type": "FeatureCollection", features: currentScreenCords}}>
               <MapboxGL.FillLayer
                 ref ={ref => shapeFillRef.current = ref}
                 id="selectedNYCFill"
-                style={isSameViewClicked ? styles.deSelectedNeighborhood : styles.selectedNeighborhood}
+                style={styles.selectedNeighborhood}
               />
             </MapboxGL.ShapeSource>
           ) : null}
