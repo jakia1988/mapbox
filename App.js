@@ -2,7 +2,7 @@ import React, { useCallback, useRef, useState } from 'react';
 import MapboxGL from '@react-native-mapbox-gl/maps';
 import nycJSON from './location.json';
 import { View, Text } from 'react-native';
-
+import MapDataCard from './MapDataCard';
 
 MapboxGL.setAccessToken('pk.eyJ1IjoiYnAtcG9wY29ybnYiLCJhIjoiY2tlOXJhcXJqMDNlbTJ5bnpwb2k1emo1eCJ9.XfQFSWRJafKmMRp5ULemJA');
 
@@ -82,7 +82,13 @@ function App() {
             </MapboxGL.ShapeSource>
           ) : null}
         </MapboxGL.MapView>
-        <View style={{position: 'absolute', top: 0, flex: 1, alignItems: 'center', backgroundColor: 'rgba(255,255,255, 0.8)',}}>
+        <View style={{position:'absolute',  bottom:10,marginLeft:9, marginRight:9,}}>
+          <MapDataCard
+            selected = {`${Reflect.ownKeys(screenCordsConfig).length}`}
+            total = {`${nycJSON.features.length}` }
+          />
+        </View>
+        {/* <View style={{position: 'absolute', top: 0, flex: 1, alignItems: 'center', backgroundColor: 'rgba(255,255,255, 0.8)',}}>
           {   
           !!Reflect.ownKeys(screenCordsConfig) && Reflect.ownKeys(screenCordsConfig).map(item => {
             return <Text key={item} style={{flex: 1}}>{screenCordsConfig[item].features[0].properties.name}</Text> 
@@ -94,7 +100,7 @@ function App() {
           {   
             <Text style={{flex: 1}}>{`${Reflect.ownKeys(screenCordsConfig).length} / ${nycJSON.features.length}` }</Text> 
           }
-        </View>   
+        </View>    */}
 
       </>
 
