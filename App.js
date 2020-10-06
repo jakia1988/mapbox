@@ -58,10 +58,14 @@ function App() {
     );
 
     if (featureCollection.features.length) {
-      const { id } = featureCollection.features[0];
+      const { id, properties: {db_id} } = featureCollection.features[0];
       if (Reflect.ownKeys(screenCordsConfig).includes(id)) {
-        !!Reflect.ownKeys(screenCordsConfig) && delete screenCordsConfig[id];
+        if (!!Reflect.ownKeys(screenCordsConfig)) {
+          await locationService.removeSelectedLocation(db_id);
+          delete screenCordsConfig[id];
+        } 
       } else {
+        await locationService.addSelectedLocation(db_id);
         userSelectedCords = Object.assign(screenCordsConfig, { [id]: featureCollection });
         setScreenCordsConfig(userSelectedCords);
       }
