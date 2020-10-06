@@ -5,7 +5,7 @@ const windowWidth = Dimensions.get('window').width;
 class MapDataCard extends Component {
 
   render() {
-    const { selected , total } = this.props
+    const { selected , total, selectedContinent } = this.props
     return (
       <View style={styles.container}>
         <View style={styles.tabView}>
@@ -30,7 +30,7 @@ class MapDataCard extends Component {
           <View style={styles.verticalSeperator}></View>
           <View style={{width:'49%', justifyContent:'center'}}>
             <View style={{flexDirection:'row', alignSelf:'center'}}>
-              <Text style={styles.countText}>0</Text>
+            <Text style={styles.countText}>{selectedContinent}</Text>
               <Text style={[styles.countText, {opacity:0.2}]}>/7</Text>
             </View>
             <Text style={styles.countries}>Continents Visited</Text>
