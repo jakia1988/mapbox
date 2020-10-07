@@ -4,6 +4,7 @@ import nycJSON from './location.json';
 import { View, Text } from 'react-native';
 import MapDataCard from './MapDataCard';
 import LocationService from './locationService';
+import { groupBy, invertBy, uniqBy } from 'lodash';
 
 
 MapboxGL.setAccessToken('pk.eyJ1IjoiYnAtcG9wY29ybnYiLCJhIjoiY2tlOXJhcXJqMDNlbTJ5bnpwb2k1emo1eCJ9.XfQFSWRJafKmMRp5ULemJA');
@@ -42,14 +43,26 @@ function App() {
   }, [])
 
   const fetchLocation = useCallback(async () => {
-    const staticMapConfig = await locationService.getAllLocation();
-    setMapLocations(staticMapConfig);
+    const continents = [];
+    const {selectedLocation, locations} = await locationService.getAllLocation();
+     setMapLocations(locations);
+     if (selectedLocation.length > 0) {
+      const screenConfig = groupBy(selectedLocation, 'id') 
+      Reflect.ownKeys(screenConfig).forEach(item => {
+        screenConfig[item] = screenConfig[item][0];
+        continents.push(screenConfig[item].properties.parent)
+      })
+      const selectedContinent = [...new Set(continents)].length;
+      setContinentCount(selectedContinent);
+      setScreenCordsConfig(screenConfig);
+      setCurrentScreenCords(selectedLocation)
+     }
   }, [])
 
 
 
   const onPress = useCallback(async e => {
-    let userSelectedCords, currCords = [], continents = [];
+    let userSelectedCords, currCords = [],  continents = [];
     const { screenPointX, screenPointY } = e.properties;
     const featureCollection = await mapRef.current.queryRenderedFeaturesAtPoint(
       [screenPointX, screenPointY],
@@ -77,7 +90,8 @@ function App() {
       // Getting continent Count
       const selectedContinent = [...new Set(continents)].length;
       setContinentCount(selectedContinent);
-      setCurrentScreenCords(currCords)
+      const updatedCords = uniqBy([...currentScreenCords, ...currCords], 'id');
+      setCurrentScreenCords(updatedCords)
     }
     
   }, []);
@@ -115,7 +129,7 @@ function App() {
             </MapboxGL.MapView>
             <View style={{ position: 'absolute', bottom: 10, marginLeft: 9, marginRight: 9, }}>
               <MapDataCard
-                selected={`${Reflect.ownKeys(screenCordsConfig).length}`}
+                selected={`${currentScreenCords.length}`}
                 selectedContinent = {continentCount}
                 total={`${mapLocation.features.length}`}
               />
