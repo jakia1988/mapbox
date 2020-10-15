@@ -1,12 +1,12 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import MapboxGL from '@react-native-mapbox-gl/maps';
 import Share from "react-native-share";
-import ViewShot from "react-native-view-shot";
-import { View, Button } from 'react-native';
+import ViewShot, {captureRef} from "react-native-view-shot";
+import { groupBy, invertBy, isNil, uniqBy } from 'lodash';
+import { View, Button, Dimensions, Text } from 'react-native';
+import continentList from './continentList.json';
 import MapDataCard from './MapDataCard';
 import LocationService from './locationService';
-import { groupBy, invertBy, isNil, uniqBy } from 'lodash';
-import ShareCard from './ShareCard';
 const RNFS = require('react-native-fs');
 
 
@@ -42,10 +42,13 @@ function App() {
   const [currentScreenCords, setCurrentScreenCords] = useState([]);
   const [continentCount, setContinentCount] = useState(0);
   const [screenCordsConfig, setScreenCordsConfig] = useState({});
+  const [showDetailedView, setShowDetailedView] = useState(false);
+  const [mapHeight, setMapheight] = useState(150)
 
 
   useEffect(() => {
     fetchLocation();
+    console.log(continentList)
   }, [])
 
   const fetchLocation = useCallback(async () => {
@@ -102,34 +105,67 @@ function App() {
   }, []);
 
   const onShare = useCallback(() => {
-    screenshotRef.current.capture().then(uri => {
-      RNFS.readFile(uri, 'base64').then((res) => {
-        let urlString = 'data:image/png;base64,' + res;
-        setMapImageUrl(uri)
-      });
+    //setting height of map when sharing map
+
+    setMapheight(300)
+    setShowDetailedView(true);
+    setTimeout(() => {
+    captureRef(screenshotRef.current, {
+      format: "jpg",
+      quality: 0.8
+    }).then(
+      uri => {
+          RNFS.readFile(uri, 'base64').then((res) => {
+          let urlString = 'data:image/jpeg;base64,' + res;
+          let options = {
+            title: 'Travel Summary',
+            message: 'Alyssa Travel Summary',
+            url: urlString,
+            type: 'image/jpeg',
+          };
+          Share.open(options)
+            .then((res) => {
+              console.log(res);
+            })
+            .catch((err) => {
+              err && console.log(err);
+            });
+            
+        });
+      },
+      error => {
+        console.error("Oops, snapshot failed", error);
+        // setShowDetailedView(false);
+      }
+    ).finally(() => {
+      setShowDetailedView(false);
+      setMapheight(150)
     });
-  }, [])
+    }, 10)
+    
+  }, []);
 
   return (
     <>
-    <ViewShot 
-      ref={ref => screenshotRef.current = ref} style={{flex: 2}}>
+   
       {
         !!Reflect.ownKeys(mapLocation).length && 
         <>
-            <MapboxGL.MapView
-              ref={(c) => (mapRef.current = c)}
-              onPress={(e) => onPress(e)}
-              style={{ flex: 1, fillColor: '#f4efe8' }}
-              styleURL={MapboxGL.StyleURL.Light}>
-              <MapboxGL.Camera
-                zoomLevel={1}
-                centerCoordinate={[12.690006,55.609991]}
-              />
+            <ViewShot 
+              ref={ref => screenshotRef.current = ref} style={{position: 'relative', flex: 1, backgroundColor: '#fff'}}>  
+              <MapboxGL.MapView
+                ref={(c) => (mapRef.current = c)}
+                onPress={(e) => onPress(e)}
+                style={{ fillColor: '#f4efe8', position:'relative', height: Dimensions.get('window').height - mapHeight }}
+                styleURL={MapboxGL.StyleURL.Light}>
+                <MapboxGL.Camera
+                  zoomLevel={1}
+                  centerCoordinate={[12.690006,55.609991]}
+                />
 
-              <MapboxGL.ShapeSource id="nyc" shape={mapLocation}>
-                <MapboxGL.FillLayer id="nycFill" style={styles.neighborhoods} />
-              </MapboxGL.ShapeSource>
+                <MapboxGL.ShapeSource id="nyc" shape={mapLocation}>
+                  <MapboxGL.FillLayer id="nycFill" style={styles.neighborhoods} />
+                </MapboxGL.ShapeSource>
 
               {currentScreenCords.length ? (
                 <MapboxGL.ShapeSource
@@ -144,29 +180,25 @@ function App() {
               ) : null}
 
             </MapboxGL.MapView>
-
-            <View style={{ position: 'absolute', bottom: 10, marginLeft: 9, marginRight: 9, }}>
-                <MapDataCard
+             <MapDataCard
                   selected={`${currentScreenCords.length}`}
                   selectedContinent = {continentCount}
                   total={`${mapLocation.features.length}`}
+                  showDetailedView = {showDetailedView}
+                  userName = {'Alyssa'}
+                  continentList = {continentList}
                 />
-            </View>
-            <View style={{ position: 'absolute', right: 10, top: 10, marginLeft: 9, marginRight: 9, }}>
+           </ViewShot>
+            
+            </>
+      }
+          <View style={{ position: 'absolute', right: 10, top: 10, marginLeft: 9, zIndex: 99, marginRight: 9, }}>
               <Button
                 color="#f194ff"
                 title="Capture and Share"
-                onPress={onShare}
+                onPress={() => onShare()}
              />
             </View>
-            </>
-      }
-   </ViewShot>
-    {
-      !isNil(imageMapURL) &&  <ShareCard imgUrl={imageMapURL}  />
-    }  
-   
-
    </>
    
   );

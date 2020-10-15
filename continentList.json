@@ -1,0 +1,8 @@
+{
+    "North America" : {"totalCountry": 23, "selectedCountry": 0},
+    "Asia" : {"totalCountry": 50, "selectedCountry": 0},
+    "South America" : {"totalCountry": 12, "selectedCountry": 0},
+    "Europe" : {"totalCountry": 51, "selectedCountry": 0},
+    "Africa" : {"totalCountry": 54, "selectedCountry": 0},
+    "Australia" : {"totalCountry": 14, "selectedCountry": 0},
+}

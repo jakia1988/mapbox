@@ -5,18 +5,36 @@ const windowWidth = Dimensions.get('window').width;
 class MapDataCard extends Component {
 
   render() {
-    const { selected , total, selectedContinent } = this.props
+    const { selected , total, selectedContinent, showDetailedView, userName, continentList } = this.props
     return (
+      <>
+      <View style={{position: 'relative'}}>
+      <View style={{backgroundColor: '#fff', width: 50, position: 'absolute',  top: 0, left: 10, zIndex: 999, transform: [{ rotate: "-20deg" }]}}>
+        <Text>logo</Text>
+      </View>
       <View style={styles.container}>
         <View style={styles.tabView}>
-          <View style={{width:'50%', marginTop:'4%'}}>
-            <Text style={styles.tabText}>You</Text>
-            <View style={styles.activetabline}></View>
-          </View>
-          <View style={{width:'50%', marginTop:'4%'}}>
-            <Text style={styles.tabText}>BRUISED PASSPORT</Text>
-            {/* <View style={styles.activetabline}></View> */}
-          </View>
+          {
+            !showDetailedView ? (
+              <>
+                <View style={{width:'50%', marginTop:'4%'}}>
+                  <Text style={styles.tabText}>You</Text>
+                  <View style={styles.activetabline}></View>
+                </View>
+              <View style={{width:'50%', marginTop:'4%'}}>
+                <Text style={styles.tabText}>BRUISED PASSPORT</Text>
+                {/* <View style={styles.activetabline}></View> */}
+              </View>
+              </>
+            ) : (
+              <>
+                  <View style={{width:'100%', marginTop:'4%'}}>
+                    <Text style={styles.tabHeadText}>{`${userName}'s Travel Summary`}</Text>
+                  </View>
+              </>
+            )
+          }
+          
         </View>
         {/* <View style={styles.horizontalSeperator}></View> */}
         <View style={{flexDirection:'row'}}>
@@ -36,7 +54,35 @@ class MapDataCard extends Component {
             <Text style={styles.countries}>Continents Visited</Text>
           </View>
         </View>
+
+        {
+          showDetailedView &&  
+          <View style={{flexDirection:'row',  flexWrap:'wrap',  marginTop: 10}}>
+            {
+              Reflect.ownKeys(continentList).length && Reflect.ownKeys(continentList).map((continentName, index) => {
+                return (
+                    <View key={`list${index}`} style={{width:'33%', marginBottom: 20, justifyContent:'center'}}>
+                      <View style={{flexDirection:'row', alignSelf:'center'}}>
+                        <Text style={styles.countBlackText}>{continentList[continentName].selectedCountry}</Text>
+                        <Text style={styles.countBlackText}>/{continentList[continentName].totalCountry}</Text>
+                      </View>
+                      <View>
+                        <Text style={styles.countBlackSmallText}>{continentName}</Text>
+                      </View>
+                    </View>
+                )
+              })
+            }
+            
+          </View>
+        }
+
+       
+       
+
       </View>
+      </View>
+      </>
     );
   }
 }
@@ -44,9 +90,8 @@ class MapDataCard extends Component {
 
 const styles = StyleSheet.create({
   container: {
-    width:windowWidth - 18,
+    width:windowWidth,
     height:179,
-    borderRadius:8,
     backgroundColor:'#FFFFFF',
   },
   tabView:{
@@ -54,6 +99,13 @@ const styles = StyleSheet.create({
     borderBottomWidth:1, 
     borderBottomColor:'rgba(0, 0, 0, 0.05)',
     height:48,
+  },
+  tabHeadText:{
+    fontSize:24,
+    lineHeight:34,
+    fontFamily:'Roboto-bold',
+    color:'#000000',
+    alignSelf:'center'
   },
   tabText:{
     fontSize:12,
@@ -90,6 +142,20 @@ const styles = StyleSheet.create({
     lineHeight:41,
     fontFamily:'Roboto-Bold',
     color:'#C79B63',
+    textAlign:'center'
+  },
+  countBlackText:{
+    fontSize:25,
+    lineHeight:31,
+    fontFamily:'Roboto-Bold',
+    color:'#000',
+    textAlign:'center'
+  },
+  countBlackSmallText:{
+    fontSize:15,
+    lineHeight:21,
+    fontFamily:'Roboto-Bold',
+    color:'#000',
     textAlign:'center'
   },
 
