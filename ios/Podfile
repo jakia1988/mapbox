@@ -8,6 +8,12 @@ target 'layermap' do
 
   use_react_native!(:path => config["reactNativePath"])
 
+  pod 'react-native-view-shot', :path => '../node_modules/react-native-view-shot'
+
+  pod 'RNShare', :path => '../node_modules/react-native-share'
+
+  pod 'RNFS', :path => '../node_modules/react-native-fs'
+
   target 'layermapTests' do
     inherit! :complete
     # Pods for testing

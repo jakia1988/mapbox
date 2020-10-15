@@ -1,10 +1,14 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import MapboxGL from '@react-native-mapbox-gl/maps';
-import nycJSON from './location.json';
-import { View, Text } from 'react-native';
+import Share from "react-native-share";
+import ViewShot from "react-native-view-shot";
+import { View, Button } from 'react-native';
 import MapDataCard from './MapDataCard';
 import LocationService from './locationService';
-import { groupBy, invertBy, uniqBy } from 'lodash';
+import { groupBy, invertBy, isNil, uniqBy } from 'lodash';
+import ShareCard from './ShareCard';
+const RNFS = require('react-native-fs');
+
 
 
 MapboxGL.setAccessToken('pk.eyJ1IjoiYnAtcG9wY29ybnYiLCJhIjoiY2tlOXJhcXJqMDNlbTJ5bnpwb2k1emo1eCJ9.XfQFSWRJafKmMRp5ULemJA');
@@ -31,6 +35,8 @@ const styles = {
 function App() {
   const mapRef = useRef(null)
   const shapeFillRef = useRef(null);
+  const screenshotRef = useRef(null);
+  const [imageMapURL, setMapImageUrl] = useState(null);
   const [locationService] = useState(new LocationService());
   const [mapLocation, setMapLocations] = useState({});
   const [currentScreenCords, setCurrentScreenCords] = useState([]);
@@ -57,9 +63,8 @@ function App() {
       setScreenCordsConfig(screenConfig);
       setCurrentScreenCords(selectedLocation)
      }
-  }, [])
 
-
+    }, [])
 
   const onPress = useCallback(async e => {
     let userSelectedCords, currCords = [],  continents = [];
@@ -96,11 +101,22 @@ function App() {
     
   }, []);
 
+  const onShare = useCallback(() => {
+    screenshotRef.current.capture().then(uri => {
+      RNFS.readFile(uri, 'base64').then((res) => {
+        let urlString = 'data:image/png;base64,' + res;
+        setMapImageUrl(uri)
+      });
+    });
+  }, [])
+
   return (
     <>
+    <ViewShot 
+      ref={ref => screenshotRef.current = ref} style={{flex: 2}}>
       {
         !!Reflect.ownKeys(mapLocation).length && 
-          <>
+        <>
             <MapboxGL.MapView
               ref={(c) => (mapRef.current = c)}
               onPress={(e) => onPress(e)}
@@ -126,18 +142,33 @@ function App() {
                   />
                 </MapboxGL.ShapeSource>
               ) : null}
+
             </MapboxGL.MapView>
+
             <View style={{ position: 'absolute', bottom: 10, marginLeft: 9, marginRight: 9, }}>
-              <MapDataCard
-                selected={`${currentScreenCords.length}`}
-                selectedContinent = {continentCount}
-                total={`${mapLocation.features.length}`}
-              />
+                <MapDataCard
+                  selected={`${currentScreenCords.length}`}
+                  selectedContinent = {continentCount}
+                  total={`${mapLocation.features.length}`}
+                />
             </View>
-          </>
-        
+            <View style={{ position: 'absolute', right: 10, top: 10, marginLeft: 9, marginRight: 9, }}>
+              <Button
+                color="#f194ff"
+                title="Capture and Share"
+                onPress={onShare}
+             />
+            </View>
+            </>
       }
-      </>
+   </ViewShot>
+    {
+      !isNil(imageMapURL) &&  <ShareCard imgUrl={imageMapURL}  />
+    }  
+   
+
+   </>
+   
   );
 
 }
