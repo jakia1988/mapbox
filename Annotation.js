@@ -1,6 +1,8 @@
 import React, { useCallback } from 'react';
 import { Animated, View, Text, StyleSheet, Image, Dimensions } from 'react-native';
 import MapboxGL from '@react-native-mapbox-gl/maps';
+import annotationJSON from './annotation.json';
+import { isNil } from 'lodash';
 const singleImage = require('./place-marker.png');
 const multipleImage = require('./marker.png');
 
@@ -55,11 +57,21 @@ const layerStyles = {
 
 export default function Annotation() {
     const mapRef = React.useRef(null)
-    const [currentLocation, setCurrentLocation] = React.useState('')
+    const [currentLocation, setCurrentLocation] = React.useState('');
+    const [imageURL, setImageURL] = React.useState('');
      
     const onAnnotationPress = React.useCallback((args) => {
-       const {coordinates: {latitude, longitude}} = args;
-       setCurrentLocation(`${latitude}, ${longitude}`)
+       const {features, coordinates: {latitude, longitude}} = args;
+       const {properties} = features[0];
+       setCurrentLocation(`${latitude}, ${longitude}`);
+       if (Reflect.ownKeys(properties).includes('display_image')) {
+           const {display_image} = properties;
+            !isNil(display_image) ? setImageURL(`https://bp-strapi.popcornv.com${display_image?.formats?.thumbnail?.url}`) : setImageURL('');
+            console.log(`https://bp-strapi.popcornv.com${display_image?.formats?.thumbnail?.url}`);
+       } else {
+           setImageURL('');
+       }
+       
     }, [])
 
     return (
@@ -72,7 +84,7 @@ export default function Annotation() {
                 <MapboxGL.Camera
                     zoomLevel={6}
                     pitch={45}
-                    centerCoordinate={[-117.6988297,35.8571663,5.21]}
+                    centerCoordinate={[ 32.56, 25.225]}
                 />
 
                 <MapboxGL.ShapeSource
@@ -81,7 +93,7 @@ export default function Annotation() {
                     clusterRadius={50}
                     clusterMaxZoom={14}
                     onPress={(e) => onAnnotationPress(e)}
-                    url="https://earthquake.usgs.gov/earthquakes/feed/v1.0/summary/all_week.geojson"
+                    shape={annotationJSON.data}
                     >
 
                     <MapboxGL.SymbolLayer
@@ -94,14 +106,19 @@ export default function Annotation() {
                         filter={['!', ['has', 'point_count']]}
                         style={layerStyles.singlePointImg}
                     />
-
-                        
                     </MapboxGL.ShapeSource>
-     
-            </MapboxGL.MapView>
-            <View style={{position:'absolute', flex: 1, justifyContent: 'center', alignItems:'center', width: Dimensions.get('window').width, height: 100, bottom: 0, backgroundColor: '#fff'}}>
-                <Text>{currentLocation || 'Please select any location'}</Text>
-            </View>          
+                </MapboxGL.MapView>
+                <View style={{position:'absolute', flex: 1, justifyContent: 'center', alignItems:'center', width: Dimensions.get('window').width, height: 200, bottom: 0, backgroundColor: '#fff'}}>
+                    {
+                        !!imageURL.length && 
+                        <Image 
+                        source={{
+                            uri: imageURL
+                        }}
+                        style={{height: 200, width: Dimensions.get('window').width}}
+                        />
+                    }
+                </View>          
 
         </>
     )
