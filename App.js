@@ -43,7 +43,9 @@ function App() {
   const [continentCount, setContinentCount] = useState(0);
   const [screenCordsConfig, setScreenCordsConfig] = useState({});
   const [showDetailedView, setShowDetailedView] = useState(false);
-  const [mapHeight, setMapheight] = useState(150)
+  const [mapHeight, setMapheight] = useState(150);
+  const [zoomLevel, setZoomLevel] = useState(1);
+  const [centerCoordinate, setCenterCoordinates] = useState([12.690006,55.609991]);
 
 
   useEffect(() => {
@@ -105,12 +107,14 @@ function App() {
 
   const onShare = useCallback(async () => {
     //setting height of map when sharing map
+    const centerCoordinates = currentScreenCords.map(item => item.geometry.coordinates[0]).flat();
+    setCenterCoordinates(centerCoordinates[0])
+    setZoomLevel(0);
 
+    
     const selectedLocationsIds = currentScreenCords.map(location => location.properties.db_id);
     await locationService.scratchedOnlyTheselocations(selectedLocationsIds);
 
-    setMapheight(300)
-    setShowDetailedView(true);
     setTimeout(() => {
     captureRef(screenshotRef.current, {
       format: "jpg",
@@ -145,7 +149,7 @@ function App() {
     });
     }, 10)
     
-  }, [currentScreenCords]);
+  }, [currentScreenCords, zoomLevel, centerCoordinate]);
 
 
   return (
@@ -159,11 +163,12 @@ function App() {
               <MapboxGL.MapView
                 ref={(c) => (mapRef.current = c)}
                 onPress={(e) => onPress(e)}
+                showUserLocation
                 style={{ fillColor: '#f4efe8', position:'relative', height: Dimensions.get('window').height - mapHeight }}
                 styleURL={MapboxGL.StyleURL.Light}>
                 <MapboxGL.Camera
-                  zoomLevel={1}
-                  centerCoordinate={[12.690006,55.609991]}
+                  zoomLevel={zoomLevel}
+                  centerCoordinate={centerCoordinate}
                 />
 
                 <MapboxGL.ShapeSource id="nyc" shape={mapLocation}>
