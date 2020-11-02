@@ -48,7 +48,6 @@ function App() {
 
   useEffect(() => {
     fetchLocation();
-    console.log(continentList)
   }, [])
 
   const fetchLocation = useCallback(async () => {
@@ -77,22 +76,22 @@ function App() {
       null,
       ['nycFill'],
     );
-
+   
     if (featureCollection.features.length) {
-      const { id, properties: {db_id} } = featureCollection.features[0];
+      const { id } = featureCollection.features[0];
       if (Reflect.ownKeys(screenCordsConfig).includes(id)) {
         if (!!Reflect.ownKeys(screenCordsConfig)) {
-          await locationService.removeSelectedLocation(db_id);
           delete screenCordsConfig[id];
         } 
       } else {
-        await locationService.addSelectedLocation(db_id);
-        userSelectedCords = Object.assign(screenCordsConfig, { [id]: featureCollection });
+        userSelectedCords = Object.assign(screenCordsConfig, { [id]: featureCollection.features[0] });
         setScreenCordsConfig(userSelectedCords);
       }
+
+
       Reflect.ownKeys(screenCordsConfig).forEach(item => {
-        const {properties: {parent}} = screenCordsConfig[item].features[0];
-        currCords.push(screenCordsConfig[item].features[0])
+        const {properties: {parent}} = screenCordsConfig[item];
+        currCords.push(screenCordsConfig[item])
         continents.push(parent);
       })
       // Getting continent Count
@@ -102,10 +101,13 @@ function App() {
       setCurrentScreenCords(updatedCords)
     }
     
-  }, []);
+  }, [screenCordsConfig]);
 
-  const onShare = useCallback(() => {
+  const onShare = useCallback(async () => {
     //setting height of map when sharing map
+
+    const selectedLocationsIds = currentScreenCords.map(location => location.properties.db_id);
+    await locationService.scratchedOnlyTheselocations(selectedLocationsIds);
 
     setMapheight(300)
     setShowDetailedView(true);
@@ -143,7 +145,8 @@ function App() {
     });
     }, 10)
     
-  }, []);
+  }, [currentScreenCords]);
+
 
   return (
     <>

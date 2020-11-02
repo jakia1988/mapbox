@@ -6,6 +6,8 @@
     "android": "react-native run-android",
     "ios": "react-native run-ios",
     "start": "react-native start",
+    "clear": "watchman watch-del-all && rm -rf node_modules/ && yarn cache clean && npm install",
+    "clean": "watchman watch-del-all",
     "test": "jest",
     "lint": "eslint ."
   },
