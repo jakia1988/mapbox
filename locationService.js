@@ -1,24 +1,23 @@
 import axios from 'axios';
-import { isNil } from 'lodash';
-
 class LocationService{
     constructor() {
-        this.authToken = `eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjVmOWZjYWI3Y2NhNjE3N2JkYzBiN2U4NCIsImlhdCI6MTYwNDMwNzYzOSwiZXhwIjoxNjA2ODk5NjM5fQ.vk1R_Junm1KQ3s_mIw3dH3xnyfELt2UIxudqJ5F-ejk`;
+        this.authToken = `eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjVmZjcwY2I0Y2VmMzI3NWQ4MDM2YWVkOSIsImlhdCI6MTYxMTgzODE1MSwiZXhwIjoxNjE0NDMwMTUxfQ.5WgAIt43zo7ooFP_qFb6CS5OtyMk3mVP2bXRJ6TLP2Q`;
     }
-    async getAllLocation() {
-        const url = `https://bp-strapi.popcornv.com/all-locations/v0.1/`;
+    async getAllLocation(isYouActiveTab) {
+        const url = isYouActiveTab ? `https://bp-strapi.popcornv.com/all-locations/v0.1/` : 'https://bp-strapi.popcornv.com/all-locations/v0.1/visited-by-bruised-passport';
         const headers = {
             "Authorization": `Bearer ${this.authToken}`,
             "Content-Type": "application/json"
         }
-        const {data: {locations, scratched_locations}} = await axios({
+        const isHeader = isYouActiveTab ? headers : {}
+        const response  =  await axios({
             method: 'get',
             url,
-            headers
+            isHeader
         });
         return {
-            locations,
-            selectedLocation: !isNil(scratched_locations) ? scratched_locations.features : []
+            'locations' : isYouActiveTab ? response.data.locations : response.data.all_locations,
+            'selectedLocation':  isYouActiveTab ? response.data.scratched_locations.features : response.data.all_locations
         }
     }
 

@@ -42,30 +42,41 @@ function App() {
   const [currentScreenCords, setCurrentScreenCords] = useState([]);
   const [continentCount, setContinentCount] = useState(0);
   const [screenCordsConfig, setScreenCordsConfig] = useState({});
-  const [showDetailedView, setShowDetailedView] = useState(false);
-  const [mapHeight, setMapheight] = useState(150);
+  const [showDetailedView, setShowDetailedView] = useState(true);
+  const [isYouActiveTab, setIsYouActiveTab] = useState(true)
+  const [mapHeight, setMapheight] = useState(250);
   const [zoomLevel, setZoomLevel] = useState(1);
   const [centerCoordinate, setCenterCoordinates] = useState([12.690006,55.609991]);
 
 
   useEffect(() => {
-    fetchLocation();
-  }, [])
+    fetchLocation(isYouActiveTab);
+  }, [isYouActiveTab])
 
-  const fetchLocation = useCallback(async () => {
+  const fetchLocation = useCallback(async (isYouActiveTab) => {
     const continents = [];
-    const {selectedLocation, locations} = await locationService.getAllLocation();
-     setMapLocations(locations);
-     if (selectedLocation.length > 0) {
+    if (!isYouActiveTab) {
+      setContinentCount(0);
+      setScreenCordsConfig({});
+      setCenterCoordinates([12.690006,55.609991]);
+    } else {
+      setCurrentScreenCords([])
+    }
+    const {selectedLocation, locations} = await locationService.getAllLocation(isYouActiveTab);
+    !isYouActiveTab && setCurrentScreenCords(locations.features);
+
+     if (!!selectedLocation.length) {
       const screenConfig = groupBy(selectedLocation, 'id') 
-      Reflect.ownKeys(screenConfig).forEach(item => {
-        screenConfig[item] = screenConfig[item][0];
-        continents.push(screenConfig[item].properties.parent)
-      })
-      const selectedContinent = [...new Set(continents)].length;
-      setContinentCount(selectedContinent);
-      setScreenCordsConfig(screenConfig);
-      setCurrentScreenCords(selectedLocation)
+      if (isYouActiveTab) {
+        Reflect.ownKeys(screenConfig).forEach(item => {
+          screenConfig[item] = screenConfig[item][0];
+          !!screenConfig[item].properties.parent_type && continents.push(screenConfig[item].properties.parent)
+        });
+        const selectedContinent = [...new Set(continents)];
+        setContinentCount(selectedContinent.length);
+        setScreenCordsConfig(screenConfig);
+        setCurrentScreenCords(selectedLocation)
+      }
      }
 
     }, [])
@@ -92,13 +103,13 @@ function App() {
 
 
       Reflect.ownKeys(screenCordsConfig).forEach(item => {
-        const {properties: {parent}} = screenCordsConfig[item];
+        const {properties: {parent, parent_type}} = screenCordsConfig[item];
         currCords.push(screenCordsConfig[item])
-        continents.push(parent);
+        !!parent_type && continents.push(parent);
       })
       // Getting continent Count
-      const selectedContinent = [...new Set(continents)].length;
-      setContinentCount(selectedContinent);
+      const selectedContinent = [...new Set(continents)];
+      setContinentCount(selectedContinent.length);
       const updatedCords = uniqBy([...currentScreenCords, ...currCords], 'id');
       setCurrentScreenCords(updatedCords)
     }
@@ -151,6 +162,10 @@ function App() {
     
   }, [currentScreenCords, zoomLevel, centerCoordinate]);
 
+  const onTabActive = useCallback(() => {
+    setIsYouActiveTab(!isYouActiveTab);
+  }, [isYouActiveTab])
+
 
   return (
     <>
@@ -189,12 +204,14 @@ function App() {
 
             </MapboxGL.MapView>
              <MapDataCard
+                  isYouActiveTab = {isYouActiveTab}
                   selected={`${currentScreenCords.length}`}
                   selectedContinent = {continentCount}
                   total={`${mapLocation.features.length}`}
                   showDetailedView = {showDetailedView}
                   userName = {'Alyssa'}
                   continentList = {continentList}
+                  onTabClick = {onTabActive}
                 />
            </ViewShot>
             

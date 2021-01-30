@@ -1,11 +1,11 @@
 import React, { Component } from 'react';
-import { Text, View, Pressable, StyleSheet, Dimensions, ImageBackground } from 'react-native';
+import { Text, View, Pressable, StyleSheet, Dimensions, ImageBackground, TouchableOpacity } from 'react-native';
 const windowWidth = Dimensions.get('window').width;
 
 class MapDataCard extends Component {
-
+ 
   render() {
-    const { selected , total, selectedContinent, showDetailedView, userName, continentList } = this.props
+    const { isYouActiveTab, onTabClick, selected , total, selectedContinent, showDetailedView, userName, continentList } = this.props
     return (
       <>
       <View style={{position: 'relative'}}>
@@ -14,30 +14,18 @@ class MapDataCard extends Component {
       </View>
       <View style={styles.container}>
         <View style={styles.tabView}>
-          {
-            !showDetailedView ? (
-              <>
-                <View style={{width:'50%', marginTop:'4%'}}>
+
+              <TouchableOpacity style={{width:'50%', marginTop:'4%'}}  onPress={onTabClick}>
                   <Text style={styles.tabText}>You</Text>
-                  <View style={styles.activetabline}></View>
-                </View>
-              <View style={{width:'50%', marginTop:'4%'}}>
+                  {isYouActiveTab && <View style={styles.activetabline}></View>}
+                </TouchableOpacity>
+              <TouchableOpacity style={{width:'50%', marginTop:'4%'}} onPress={onTabClick}>
                 <Text style={styles.tabText}>BRUISED PASSPORT</Text>
-                {/* <View style={styles.activetabline}></View> */}
-              </View>
-              </>
-            ) : (
-              <>
-                  <View style={{width:'100%', marginTop:'4%'}}>
-                    <Text style={styles.tabHeadText}>{`${userName}'s Travel Summary`}</Text>
-                  </View>
-              </>
-            )
-          }
-          
+                {!isYouActiveTab && <View style={styles.activetabline}></View>}
+              </TouchableOpacity>
         </View>
         {/* <View style={styles.horizontalSeperator}></View> */}
-        <View style={{flexDirection:'row'}}>
+       { isYouActiveTab && <View style={{flexDirection:'row'}}>
           <View style={{width:'50%', justifyContent:'center'}}>
             <View style={{flexDirection:'row', alignSelf:'center'}}>
               <Text style={styles.countText}>{selected}</Text>
@@ -53,11 +41,11 @@ class MapDataCard extends Component {
             </View>
             <Text style={styles.countries}>Continents Visited</Text>
           </View>
-        </View>
+        </View>}
 
         {
-          showDetailedView &&  
-          <View style={{flexDirection:'row',  flexWrap:'wrap',  marginTop: 10}}>
+          (showDetailedView && isYouActiveTab) &&  
+          <View style={{flexDirection:'row',  flexWrap:'wrap',  marginTop: 2}}>
             {
               Reflect.ownKeys(continentList).length && Reflect.ownKeys(continentList).map((continentName, index) => {
                 return (
@@ -145,8 +133,8 @@ const styles = StyleSheet.create({
     textAlign:'center'
   },
   countBlackText:{
-    fontSize:25,
-    lineHeight:31,
+    fontSize:15,
+    lineHeight:15,
     fontFamily:'Roboto-Bold',
     color:'#000',
     textAlign:'center'
